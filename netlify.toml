@@ -1,0 +1,15 @@
+# Netlify config — build the Vite app and publish the static output.
+# (Only needed if you connect this repo to Netlify via Git. For a manual
+#  drag-and-drop deploy, just upload the contents of the built `dist/` folder.)
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# SPA-style fallback so deep links resolve to the app entry.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
