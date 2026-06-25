@@ -182,6 +182,21 @@ export class BossEye {
     this.onDeath && this.onDeath(p.clone());
   }
 
+  splash(dmg) {
+    if (!this.alive) return;
+    if (this.exposed) {
+      this.hp -= dmg; this.coreMat.emissive.copy(WHITE); this.coreMat.emissiveIntensity = 3;
+      if (this.hp <= 0) this._die();
+    } else {
+      for (const s of this.shards) {
+        if (!s.alive) continue;
+        s.hp -= dmg * 0.4; s.flash = 1;
+        if (s.hp <= 0) { s.alive = false; s.mesh.visible = false; this.shardsLeft--; }
+      }
+      if (this.shardsLeft <= 0) this._expose();
+    }
+  }
+
   reset() { this.alive = false; this.group.visible = false; }
 }
 

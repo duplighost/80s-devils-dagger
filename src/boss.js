@@ -200,6 +200,14 @@ export class Leviathan {
     this.onDeath && this.onDeath(this.head.clone());
   }
 
+  // AoE damage from the player's neon bomb
+  splash(dmg) {
+    if (!this.alive) return;
+    this.hp -= dmg;
+    for (const s of this.segs) s.flash = 1;
+    if (this.hp <= 0) this._die();
+  }
+
   reset() {
     this.alive = false;
     this.group.visible = false;

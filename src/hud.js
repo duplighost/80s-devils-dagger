@@ -8,8 +8,9 @@ export class HUD {
     this.el = {
       hud: $('hud'), boot: $('boot'),
       title: $('title'), death: $('death'), pause: $('pause'),
-      timer: $('timer'), combo: $('combo'),
-      kills: $('kills'), accuracy: $('accuracy'),
+      timer: $('timer'), combo: $('combo'), mult: $('mult'),
+      kills: $('kills'), accuracy: $('accuracy'), score: $('score'),
+      odFill: $('od-fill'), odLabel: $('od-label'),
       gems: $('gems'), gemFill: $('gem-fill'), pips: $('level-pips'),
       crosshair: $('crosshair'), toast: $('toast'),
       boss: $('boss'), bossFill: $('boss-fill'), bossLabel: $('boss-label'),
@@ -17,6 +18,7 @@ export class HUD {
       bestTime: $('best-time'),
       dTime: $('death-time'), dKills: $('death-kills'), dGems: $('death-gems'),
       dAcc: $('death-acc'), dLevel: $('death-level'), dVerdict: $('death-verdict'), dBest: $('death-best'),
+      dScore: $('death-score'),
     };
     this.pipEls = Array.from(this.el.pips.querySelectorAll('.pip'));
     this._comboTimer = 0;
@@ -41,6 +43,31 @@ export class HUD {
   }
   setKills(n) { this.el.kills.textContent = n; }
   setAccuracy(pct) { this.el.accuracy.textContent = `${Math.round(pct)}%`; }
+  setScore(n) { this.el.score.textContent = n.toLocaleString('en-US'); }
+
+  setMult(m) {
+    const el = this.el.mult;
+    if (m > 1) {
+      el.textContent = `×${m}`;
+      el.classList.add('show', 'bump');
+      el.classList.toggle('hot', m >= 6);
+      setTimeout(() => el.classList.remove('bump'), 80);
+    } else {
+      el.classList.remove('show');
+    }
+  }
+
+  setOverdrive(frac, ready) {
+    this.el.odFill.style.width = `${Math.min(1, frac) * 100}%`;
+    this.el.odFill.classList.toggle('ready', ready);
+    this.el.odLabel.classList.toggle('ready', ready);
+    this.el.odLabel.textContent = ready ? '▲ NEON BOMB [Q]' : 'OVERDRIVE';
+  }
+
+  bombFlash() {
+    this.el.dmg.classList.add('bomb');
+    setTimeout(() => this.el.dmg.classList.remove('bomb'), 140);
+  }
   setGems(count, fillPct) {
     this.el.gems.textContent = count;
     this.el.gemFill.style.width = `${Math.min(100, fillPct)}%`;
@@ -86,6 +113,7 @@ export class HUD {
 
   showDeath(stats) {
     this.el.dTime.textContent = formatTime(stats.time);
+    this.el.dScore.textContent = (stats.score || 0).toLocaleString('en-US');
     this.el.dKills.textContent = stats.kills;
     this.el.dGems.textContent = stats.gems;
     this.el.dAcc.textContent = `${Math.round(stats.accuracy)}%`;

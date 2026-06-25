@@ -38,6 +38,8 @@ Click **INSERT COIN** to lock the mouse and begin.
 | `Mouse` | aim |
 | `Left Mouse` (tap) | shotgun blast of daggers |
 | `Left Mouse` (hold) | rapid dagger stream |
+| `Right Mouse` | **heavy blast** — a dense dagger volley (spends OVERDRIVE) |
+| `Q` | **NEON BOMB** at full OVERDRIVE — clears bullets, nukes the field |
 | `Shift` | dash (brief i-frames — dodge through bullets & charges) |
 | `Space` | hop |
 | `Esc` | pause (release mouse) |
@@ -64,8 +66,15 @@ Click **INSERT COIN** to lock the mouse and begin.
     **slams** out expanding shockwave rings. **Jump** the rings, sidestep the
     charge, pour fire into its core.
   - Dash has i-frames — time it to phase through a volley or a charge.
-- **Survival time is the score.** It's tracked to 1/10000th of a second, just like
-  the game that inspired it. Your best is saved locally.
+- **Build OVERDRIVE.** Kills and gems charge the OVERDRIVE meter. Spend it on a
+  Right-Mouse **heavy blast**, or save it to full and drop a **NEON BOMB** (`Q`)
+  that wipes enemy bullets and nukes the field — your panic button and your
+  combo-extender.
+- **Chain kills for the multiplier.** Consecutive kills ramp a score multiplier
+  (up to ×8); let it lapse and it resets.
+- **Survival time is the headline score.** It's tracked to 1/10000th of a second,
+  just like the game that inspired it, with a separate point score alongside.
+  Your best time is saved locally.
 
 ---
 

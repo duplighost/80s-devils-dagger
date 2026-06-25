@@ -21,6 +21,8 @@ const STATE = { TITLE: 0, PLAYING: 1, DYING: 2, DEAD: 3, PAUSED: 4 };
 const BEST_KEY = 'neon-daggers-best';
 const _cyan = new THREE.Color(HEX.cyan);
 const _muzzleDir = new THREE.Vector3();
+// points per enemy type (TYPE: SKULL,SWARM,CHARGER,SPAWNER), scaled by combo mult
+const ENEMY_POINTS = [10, 8, 16, 45];
 
 export class Game {
   constructor(canvas) {
@@ -71,6 +73,10 @@ export class Game {
     this.comboTimer = 0;
     this.shotsHit = 0;
     this.dyingTimer = 0;
+    this.score = 0;
+    this.mult = 1;
+    this.overdrive = 0;     // 0..100, powers RMB heavy blast + Q bomb
+    this.heavyCd = 0;
 
     this.best = parseFloat(localStorage.getItem(BEST_KEY) || '0') || 0;
     this._shakeOffset = new THREE.Vector3();
@@ -102,6 +108,7 @@ export class Game {
 
     addEventListener('keydown', (e) => {
       if ((e.code === 'KeyR' || e.code === 'Space' || e.code === 'Enter') && this.state === STATE.DEAD) this.restart();
+      if (e.code === 'KeyQ' && this.state === STATE.PLAYING) this._bomb();
       if (e.code === 'KeyM') { this._muted = !this._muted; this.audio.setMusic(!this._muted); this.hud.toast(this._muted ? 'MUSIC OFF' : 'MUSIC ON'); }
     });
 
@@ -131,6 +138,7 @@ export class Game {
 
     this.time = 0; this.kills = 0; this.gemCount = 0; this.level = 0;
     this.combo = 0; this.comboTimer = 0; this.shotsHit = 0;
+    this.score = 0; this.mult = 1; this.overdrive = 0; this.heavyCd = 0;
     this.weapons.shotsFired = 0;
     this.trauma = 0; this.timeScale = 1; this.targetTimeScale = 1; this.desat = 0;
     this.enemies.intensity = 0;
@@ -142,6 +150,9 @@ export class Game {
     this.hud.setGems(0, 0);
     this.hud.setAccuracy(100);
     this.hud.setTimer(0);
+    this.hud.setScore(0);
+    this.hud.setMult(1);
+    this.hud.setOverdrive(0, false);
     this.hud.lowHp(false);
 
     this.state = STATE.PLAYING;
@@ -185,7 +196,7 @@ export class Game {
     const acc = this.weapons.shotsFired > 0 ? (this.shotsHit / this.weapons.shotsFired) * 100 : 100;
     this.hud.hideHud();
     this.hud.showDeath({
-      time: this.time, kills: this.kills, gems: this.gemCount,
+      time: this.time, score: this.score, kills: this.kills, gems: this.gemCount,
       accuracy: acc, level: this.level + 1, verdict: this._verdict(this.time),
       newBest, best: this.best,
     });
@@ -206,12 +217,18 @@ export class Game {
     this.kills++;
     this.combo++;
     this.comboTimer = 2.6;
+    this.mult = Math.min(8, 1 + Math.floor(this.combo / 4));
+    this.score += Math.round((ENEMY_POINTS[e.type] || 10) * this.mult);
+    this.overdrive = Math.min(100, this.overdrive + 6);
     const p = e.mesh.position;
     this.gems.burst(p.x, p.y, p.z, e.gem);
     this.audio.kill();
     this.addTrauma(e.type === 3 ? 0.35 : 0.1);
     this.hud.combo(this.combo);
+    this.hud.setMult(this.mult);
     this.hud.setKills(this.kills);
+    this.hud.setScore(this.score);
+    this.hud.setOverdrive(this.overdrive / 100, this.overdrive >= 100);
   }
 
   _spawnBoss() {
@@ -234,6 +251,44 @@ export class Game {
     }
   }
 
+  // OVERDRIVE alt-fire (RMB): a wide, dense dagger blast.
+  _heavyBlast() {
+    const eye = this.player.eye, fwd = this.player.forward();
+    this.weapons.heavy(eye, fwd, this.level);
+    this.overdrive = Math.max(0, this.overdrive - 30);
+    this.heavyCd = 0.55;
+    this.hud.crosshairFire();
+    this.particles.cone(eye.x + fwd.x * 0.5, eye.y - 0.15 + fwd.y * 0.5, eye.z + fwd.z * 0.5, fwd, 26,
+      { color: _cyan, speed: 22, life: 0.22, size: 0.2, jitter: 0.7 });
+    this.audio.heavy();
+    this.addTrauma(0.3);
+    this.hud.setOverdrive(this.overdrive / 100, false);
+  }
+
+  // OVERDRIVE bomb (Q at full meter): clear bullets, AoE-nuke the field.
+  _bomb() {
+    if (this.state !== STATE.PLAYING || this.overdrive < 100) return;
+    this.overdrive = 0;
+    this.hud.setOverdrive(0, false);
+    this.hud.bombFlash();
+    this.audio.bomb();
+    this.addTrauma(0.95);
+    this.targetTimeScale = 0.2;
+    setTimeout(() => { if (this.state === STATE.PLAYING) this.targetTimeScale = 1; }, 300);
+
+    this.hazards.reset(); // wipe enemy bullets
+    const px = this.player.pos.x, pz = this.player.pos.z;
+    this.particles.burst(px, 1.5, pz, 140, { color: _cyan, speed: 30, life: 1.0, size: 0.32, drag: 1.4, upBias: 1 });
+    this.particles.burst(px, 1.5, pz, 80, { color: new THREE.Color(HEX.magenta), speed: 18, life: 0.8, size: 0.24, drag: 2 });
+    // obliterate normal enemies (each kill flows through _onKill -> score/gems)
+    this.enemies.forEach((e) => {
+      this.enemies.damage(e, 9999, e.mesh.position.x, e.mesh.position.y, e.mesh.position.z);
+    });
+    // chunk the boss
+    if (this.boss && this.boss.alive && this.boss.splash) this.boss.splash(this.boss.maxHp * 0.18);
+    this.hud.toast('NEON BOMB');
+  }
+
   _onBossDeath(pos) {
     const slain = this.boss ? this.boss.name.replace(/[▲ ]/g, '') : 'BOSS';
     this.director.bossActive = false;
@@ -242,7 +297,11 @@ export class Game {
     this.hud.hideBoss();
     this.hud.toast(`${slain} SLAIN`);
     this.kills += 10;
+    this.score += 750 * this.mult;
+    this.overdrive = Math.min(100, this.overdrive + 50);
     this.hud.setKills(this.kills);
+    this.hud.setScore(this.score);
+    this.hud.setOverdrive(this.overdrive / 100, this.overdrive >= 100);
     this.gems.burst(pos.x, pos.y, pos.z, 28);
     this.audio.kill(); this.audio.upgrade();
     this.addTrauma(0.8);
@@ -252,6 +311,8 @@ export class Game {
 
   _onGems(n) {
     this.gemCount += n;
+    this.overdrive = Math.min(100, this.overdrive + n * 2);
+    this.hud.setOverdrive(this.overdrive / 100, this.overdrive >= 100);
     this.audio.gem();
     // level ups
     while (this.level < LEVELS.length - 1 && this.gemCount >= LEVELS[this.level + 1].gems) {
@@ -363,6 +424,10 @@ export class Game {
         else { this.audio.shoot(); this.addTrauma(0.025); }
       }
 
+      // --- overdrive heavy blast (RMB) ---
+      this.heavyCd = Math.max(0, this.heavyCd - sdt);
+      if (this.input.rmb && this.overdrive >= 30 && this.heavyCd <= 0) this._heavyBlast();
+
       this.weapons.update(sdt, (px, py, pz, vx, vy, vz) => this.enemies.nearest(px, py, pz, vx, vy, vz));
 
       let hit = this.enemies.update(sdt, this.player, this.shaderTime);
@@ -378,7 +443,7 @@ export class Game {
 
       // combo / danger
       this.comboTimer -= sdt;
-      if (this.comboTimer <= 0 && this.combo > 0) { this.combo = 0; this.hud.combo(0); }
+      if (this.comboTimer <= 0 && this.combo > 0) { this.combo = 0; this.mult = 1; this.hud.combo(0); this.hud.setMult(1); }
       this._updateDanger();
 
       // time + HUD

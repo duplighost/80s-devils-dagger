@@ -158,6 +158,12 @@ export class BossTitan {
     this.onDeath && this.onDeath(p.clone());
   }
 
+  splash(dmg) {
+    if (!this.alive) return;
+    this.hp -= dmg; this.flash = 1;
+    if (this.hp <= 0) this._die();
+  }
+
   reset() { this.alive = false; this.group.visible = false; }
 }
 

@@ -233,6 +233,8 @@ export class AudioEngine {
   wave()     { this._blip('sawtooth', 180, 520, 0.5, 0.18, this.sfxBus, 5); }
   volley()   { this._blip('square', 320, 180, 0.12, 0.09, this.sfxBus, 6); }
   slam()     { this._blip('sine', 120, 32, 0.4, 0.32, this.sfxBus, 2); this._noise(0.35, 0.16, 120); }
+  heavy()    { this._blip('sawtooth', 520, 90, 0.24, 0.26, this.sfxBus, 5); this._noise(0.16, 0.16, 600); }
+  bomb()     { this._blip('sawtooth', 380, 24, 0.9, 0.34, this.sfxBus, 2); this._blip('square', 1400, 200, 0.5, 0.16, this.sfxBus, 3); this._noise(0.7, 0.22, 200); }
   uiClick()  { this._blip('square', 880, 880, 0.05, 0.12); }
   playerDeath() {
     this._blip('sawtooth', 600, 40, 1.2, 0.3, this.sfxBus, 3);

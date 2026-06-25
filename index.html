@@ -22,7 +22,10 @@
 
       <div class="hud-top">
         <div id="timer" class="timer">0<span class="ms">.0000</span></div>
-        <div id="combo" class="combo"></div>
+        <div class="combo-row">
+          <span id="mult" class="mult"></span>
+          <span id="combo" class="combo"></span>
+        </div>
       </div>
 
       <div id="boss" class="boss hidden">
@@ -31,6 +34,7 @@
       </div>
 
       <div class="hud-corner tl">
+        <div class="stat"><span class="label">SCORE</span><span id="score" class="value score">0</span></div>
         <div class="stat"><span class="label">KILLS</span><span id="kills" class="value">0</span></div>
       </div>
       <div class="hud-corner tr">
@@ -38,6 +42,10 @@
       </div>
 
       <div class="hud-bottom">
+        <div class="od-row">
+          <span id="od-label" class="od-label">OVERDRIVE</span>
+          <div class="od-bar"><div id="od-fill" class="od-fill"></div></div>
+        </div>
         <div id="level-pips" class="level-pips">
           <span class="pip on"></span><span class="pip"></span><span class="pip"></span>
           <span class="pip"></span><span class="pip"></span>
@@ -75,8 +83,10 @@
             <span class="key">MOUSE</span><span class="desc">aim</span>
             <span class="key">LMB&nbsp;hold</span><span class="desc">rapid daggers</span>
             <span class="key">LMB&nbsp;tap</span><span class="desc">shotgun blast</span>
-            <span class="key">SHIFT</span><span class="desc">dash</span>
+            <span class="key">RMB</span><span class="desc">heavy blast (overdrive)</span>
+            <span class="key">SHIFT</span><span class="desc">dash · i-frames</span>
             <span class="key">SPACE</span><span class="desc">hop</span>
+            <span class="key">Q</span><span class="desc">neon bomb (full meter)</span>
           </div>
           <div class="hint">collect <b class="hot">red gems</b> from the slain to level your daggers · don't get touched</div>
         </div>
@@ -91,6 +101,7 @@
         <h2 class="death-title">YOU DIED</h2>
         <div class="death-time"><span id="death-time">00.0000</span></div>
         <div id="death-verdict" class="death-verdict">rookie</div>
+        <div class="death-score-line">SCORE&nbsp;&nbsp;<span id="death-score">0</span></div>
         <div class="death-stats">
           <div class="dstat"><span id="death-kills">0</span><label>kills</label></div>
           <div class="dstat"><span id="death-gems">0</span><label>gems</label></div>

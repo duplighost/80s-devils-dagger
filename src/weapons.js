@@ -126,6 +126,25 @@ export class Weapons {
     }
   }
 
+  // OVERDRIVE alt-fire: a wide, dense blast of daggers.
+  heavy(origin, dir, level) {
+    const L = LEVELS[level];
+    this.firedThisFrame = 0;
+    const ox = origin.x, oy = origin.y - 0.18, oz = origin.z;
+    const { f, r, u } = this._basis(dir);
+    const n = 22;
+    for (let i = 0; i < n; i++) {
+      const ang = (i / n) * Math.PI * 2 + Math.random() * 0.6;
+      const rad = (0.15 + Math.random()) * L.spread * 1.7;
+      const dx = f.x + (r.x * Math.cos(ang) + u.x * Math.sin(ang)) * rad;
+      const dy = f.y + (r.y * Math.cos(ang) + u.y * Math.sin(ang)) * rad;
+      const dz = f.z + (r.z * Math.cos(ang) + u.z * Math.sin(ang)) * rad;
+      const l = Math.hypot(dx, dy, dz);
+      this._spawn(ox, oy, oz, dx / l, dy / l, dz / l, level, L.homing);
+    }
+    return this.firedThisFrame;
+  }
+
   _stream(ox, oy, oz, dir, L, level) {
     const { f, r, u } = this._basis(dir);
     const a = Math.random() * Math.PI * 2;
