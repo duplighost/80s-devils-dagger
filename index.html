@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#16002e" />
+  <title>NEON DAGGERS // 1987</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./src/styles.css" />
+</head>
+<body>
+  <div id="app">
+    <canvas id="scene"></canvas>
+
+    <!-- Heads-up display (in-game) -->
+    <div id="hud" class="hidden" aria-hidden="true">
+      <div id="vignette"></div>
+      <div id="damage-flash"></div>
+      <div id="lowhp"></div>
+
+      <div class="hud-top">
+        <div id="timer" class="timer">0<span class="ms">.0000</span></div>
+        <div id="combo" class="combo"></div>
+      </div>
+
+      <div class="hud-corner tl">
+        <div class="stat"><span class="label">KILLS</span><span id="kills" class="value">0</span></div>
+      </div>
+      <div class="hud-corner tr">
+        <div class="stat right"><span class="label">ACCURACY</span><span id="accuracy" class="value">100%</span></div>
+      </div>
+
+      <div class="hud-bottom">
+        <div id="level-pips" class="level-pips">
+          <span class="pip on"></span><span class="pip"></span><span class="pip"></span>
+          <span class="pip"></span><span class="pip"></span>
+        </div>
+        <div class="gem-row">
+          <span class="gem-ico"></span>
+          <span id="gems" class="gem-count">0</span>
+          <div class="gem-bar"><div id="gem-fill" class="gem-fill"></div></div>
+        </div>
+      </div>
+
+      <div id="crosshair" class="crosshair">
+        <span class="ch ch-n"></span><span class="ch ch-s"></span>
+        <span class="ch ch-e"></span><span class="ch ch-w"></span>
+        <span class="ch-dot"></span>
+      </div>
+
+      <div id="toast" class="toast"></div>
+    </div>
+
+    <!-- Title screen -->
+    <div id="title" class="screen">
+      <div class="title-wrap">
+        <div class="kicker">▚ ARENA SURVIVAL ▞ EST. 1987 ▚</div>
+        <h1 class="game-title"><span class="t1">NEON</span><span class="t2">DAGGERS</span></h1>
+        <div class="subtitle">how long can you last?</div>
+
+        <div class="best-line">BEST&nbsp;&nbsp;<span id="best-time">00.0000</span></div>
+
+        <button id="start-btn" class="neon-btn">▶ INSERT COIN</button>
+
+        <div class="controls">
+          <div class="ctrl-grid">
+            <span class="key">WASD</span><span class="desc">move</span>
+            <span class="key">MOUSE</span><span class="desc">aim</span>
+            <span class="key">LMB&nbsp;hold</span><span class="desc">rapid daggers</span>
+            <span class="key">LMB&nbsp;tap</span><span class="desc">shotgun blast</span>
+            <span class="key">SHIFT</span><span class="desc">dash</span>
+            <span class="key">SPACE</span><span class="desc">hop</span>
+          </div>
+          <div class="hint">collect <b class="hot">red gems</b> from the slain to level your daggers · don't get touched</div>
+        </div>
+        <div class="audio-note">▸ best with sound on · click to lock mouse</div>
+      </div>
+    </div>
+
+    <!-- Death screen -->
+    <div id="death" class="screen hidden">
+      <div class="death-wrap">
+        <div class="death-kicker">SIGNAL LOST</div>
+        <h2 class="death-title">YOU DIED</h2>
+        <div class="death-time"><span id="death-time">00.0000</span></div>
+        <div id="death-verdict" class="death-verdict">rookie</div>
+        <div class="death-stats">
+          <div class="dstat"><span id="death-kills">0</span><label>kills</label></div>
+          <div class="dstat"><span id="death-gems">0</span><label>gems</label></div>
+          <div class="dstat"><span id="death-acc">0%</span><label>accuracy</label></div>
+          <div class="dstat"><span id="death-level">1</span><label>dagger lvl</label></div>
+        </div>
+        <div id="death-best" class="death-best"></div>
+        <button id="retry-btn" class="neon-btn">▶ TRY AGAIN</button>
+        <div class="death-hint">press <span class="key">R</span> / <span class="key">SPACE</span> to retry</div>
+      </div>
+    </div>
+
+    <!-- Pause -->
+    <div id="pause" class="screen hidden">
+      <div class="pause-wrap">
+        <h2 class="pause-title">PAUSED</h2>
+        <button id="resume-btn" class="neon-btn">▶ RESUME</button>
+        <div class="death-hint">click the arena or press <span class="key">ESC</span></div>
+      </div>
+    </div>
+
+    <div id="boot" class="screen">
+      <div class="boot-text">LOADING<span class="boot-dots"></span></div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
