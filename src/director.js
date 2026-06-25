@@ -8,6 +8,8 @@ export class Director {
   constructor(enemies) {
     this.enemies = enemies;
     this.onWave = null;     // (n) => void  (HUD toast + audio sting)
+    this.onBoss = null;     // ()  => void  (spawn the leviathan)
+    this.bossActive = false;
     this.reset();
   }
 
@@ -17,6 +19,8 @@ export class Director {
     this.waveTimer = 10;
     this.wave = 0;
     this.totalSpawned = 0;
+    this.bossTimer = 62;    // first leviathan
+    this.bossActive = false;
   }
 
   _edgePos(player, minDist = 7, far = 0) {
@@ -51,23 +55,31 @@ export class Director {
   update(dt, player) {
     this.time += dt;
     const T = this.time;
-    this.enemies.intensity = clamp(T / 110, 0, 1);
+    this.enemies.intensity = clamp(T / 120, 0, 1);
 
-    // desired live population ramps up
-    const desired = Math.min(3 + T * 0.55, 46);
+    // boss schedule: leviathan periodically; thins the swarm while it's loose
+    this.bossTimer -= dt;
+    if (this.bossTimer <= 0 && !this.bossActive) {
+      this.bossTimer = 52;
+      this.onBoss && this.onBoss();
+    }
+
+    // desired live population ramps up (gentle early so daggers can level)
+    let desired = Math.min(2 + T * 0.46, 40);
+    if (this.bossActive) desired *= 0.45;
 
     this.spawnTimer -= dt;
     if (this.spawnTimer <= 0 && this.enemies.count() < desired) {
-      this.spawnTimer = Math.max(0.16, 1.1 - T * 0.012);
+      this.spawnTimer = Math.max(0.2, (this.bossActive ? 1.4 : 1.15) - T * 0.011);
       this._spawnOne(player);
     }
 
     // periodic wave bursts for intensity spikes
     this.waveTimer -= dt;
     if (this.waveTimer <= 0) {
-      this.waveTimer = Math.max(7, 15 - T * 0.04);
+      this.waveTimer = Math.max(7.5, 16 - T * 0.04) * (this.bossActive ? 1.6 : 1);
       this.wave++;
-      const n = Math.min(3 + Math.floor(T / 14), 10);
+      const n = Math.min(2 + Math.floor(T / 16), 9);
       for (let i = 0; i < n; i++) this._spawnOne(player, Math.random() < 0.4 ? 1 : 0);
       this.onWave && this.onWave(this.wave);
     }

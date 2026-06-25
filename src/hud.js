@@ -12,6 +12,7 @@ export class HUD {
       kills: $('kills'), accuracy: $('accuracy'),
       gems: $('gems'), gemFill: $('gem-fill'), pips: $('level-pips'),
       crosshair: $('crosshair'), toast: $('toast'),
+      boss: $('boss'), bossFill: $('boss-fill'),
       dmg: $('damage-flash'), lowhp: $('lowhp'),
       bestTime: $('best-time'),
       dTime: $('death-time'), dKills: $('death-kills'), dGems: $('death-gems'),
@@ -78,6 +79,10 @@ export class HUD {
     t.textContent = text;
     t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
   }
+
+  showBoss() { this.el.boss.classList.remove('hidden'); this.setBoss(1); }
+  hideBoss() { this.el.boss.classList.add('hidden'); }
+  setBoss(frac) { this.el.bossFill.style.width = `${Math.max(0, Math.min(1, frac)) * 100}%`; }
 
   showDeath(stats) {
     this.el.dTime.textContent = formatTime(stats.time);

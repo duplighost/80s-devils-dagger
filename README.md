@@ -10,6 +10,8 @@ clock to four decimal places. One touch and the signal dies.
 > Built with **Three.js** + the Web Audio API. No art or audio assets — every
 > visual is shader/geometry-driven and every sound is synthesized at runtime.
 
+![The Leviathan](docs/leviathan.png)
+
 ---
 
 ## Play
@@ -51,6 +53,9 @@ Click **INSERT COIN** to lock the mouse and begin.
   never stand still.
 - **Watch the edges.** Chargers wind up and lunge. Spawners birth swarmers and
   burst into four more when they die.
+- **The Leviathan.** Around the one-minute mark a giant neon serpent crashes the
+  party — it orbits and lunges, the head is lethal, and you chip its shared HP
+  (bar up top) by raking fire down the whole body. Kill it for a gem shower.
 - **Survival time is the score.** It's tracked to 1/10000th of a second, just like
   the game that inspired it. Your best is saved locally.
 
@@ -67,7 +72,8 @@ A small, dependency-light engine split into focused modules:
 | `player.js` | First-person controller — acceleration/friction strafe, dash, hop, head-bob, strafe-roll, the eye transform the camera rides. |
 | `weapons.js` | Instanced **dagger** projectiles, shotgun-tap / rapid-hold firing, five upgrade tiers with homing. |
 | `enemies.js` | Four neon archetypes (skull, swarmer, charger, spawner) with distinct AI, fresnel-rim bodies + glowing wireframe edges, hit-flash, splitting. |
-| `director.js` | Procedural escalation — introduces enemy types over time, grows the live population, punctuates with wave bursts. |
+| `boss.js` | **Leviathan** — a 20-segment serpent; arc-length snake-follow body, serpentine orbit/lunge AI, gradient segments, shared HP with per-segment hit-flash, lethal head, spectacle death. |
+| `director.js` | Procedural escalation — introduces enemy types over time, grows the live population, punctuates with wave bursts, and looses a Leviathan periodically. |
 | `gems.js` | Instanced gem drops with magnet collection feeding the upgrade meter. |
 | `particles.js` | Pooled additive point-sprite bursts (muzzle, sparks, deaths, the player-death supernova). |
 | `audio.js` | Fully **procedural synthwave**: four-on-the-floor drums, saw bass, delayed lead arp and pad that layer in with intensity, plus a SFX bank. Drives the visual beat. |

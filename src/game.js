@@ -4,6 +4,7 @@ import { World, ARENA_RADIUS } from './world.js';
 import { Player } from './player.js';
 import { Weapons, LEVELS } from './weapons.js';
 import { Enemies } from './enemies.js';
+import { Leviathan } from './boss.js';
 import { Director } from './director.js';
 import { Gems } from './gems.js';
 import { Particles } from './particles.js';
@@ -30,12 +31,15 @@ export class Game {
     this.player = new Player(this.input);
     this.weapons = new Weapons(this.stage.scene);
     this.enemies = new Enemies(this.stage.scene, this.particles);
+    this.boss = new Leviathan(this.stage.scene, this.particles);
     this.gems = new Gems(this.stage.scene, this.particles);
     this.director = new Director(this.enemies);
 
     this.enemies.onKill = (e) => this._onKill(e);
     this.gems.onCollect = (n) => this._onGems(n);
+    this.boss.onDeath = (pos) => this._onBossDeath(pos);
     this.director.onWave = (n) => { this.hud.toast(`WAVE ${n}`); this.audio.wave(); this.addTrauma(0.22); };
+    this.director.onBoss = () => this._spawnBoss();
 
     this.state = STATE.TITLE;
     this.clock = new THREE.Clock();
@@ -103,9 +107,11 @@ export class Game {
     this.player.reset();
     this.weapons.reset();
     this.enemies.reset();
+    this.boss.reset();
     this.gems.reset();
     this.particles.reset();
     this.director.reset();
+    this.hud.hideBoss();
 
     this.time = 0; this.kills = 0; this.gemCount = 0; this.level = 0;
     this.combo = 0; this.comboTimer = 0; this.shotsHit = 0;
@@ -192,6 +198,29 @@ export class Game {
     this.hud.setKills(this.kills);
   }
 
+  _spawnBoss() {
+    if (this.boss.alive || this.state !== STATE.PLAYING) return;
+    this.boss.spawn(this.player, this.enemies.intensity);
+    this.director.bossActive = true;
+    this.hud.showBoss();
+    this.hud.toast('▲ LEVIATHAN ▲');
+    this.audio.wave();
+    this.addTrauma(0.6);
+  }
+
+  _onBossDeath(pos) {
+    this.director.bossActive = false;
+    this.hud.hideBoss();
+    this.hud.toast('LEVIATHAN SLAIN');
+    this.kills += 10;
+    this.hud.setKills(this.kills);
+    this.gems.burst(pos.x, pos.y, pos.z, 28);
+    this.audio.kill(); this.audio.upgrade();
+    this.addTrauma(0.8);
+    this.targetTimeScale = 0.25;
+    setTimeout(() => { if (this.state === STATE.PLAYING) this.targetTimeScale = 1; }, 260);
+  }
+
   _onGems(n) {
     this.gemCount += n;
     this.audio.gem();
@@ -221,9 +250,11 @@ export class Game {
   _daggerEnemy() {
     const w = this.weapons, act = this.enemies.active;
     const dmg = LEVELS[this.level].dmg;
+    const bossOn = this.boss.alive;
     for (let i = 0; i < w.alive.length; i++) {
       if (!w.alive[i]) continue;
       const dx = w.px[i], dy = w.py[i], dz = w.pz[i];
+      let consumed = false;
       for (let j = 0; j < act.length; j++) {
         const e = act[j];
         const ex = e.mesh.position.x - dx, ey = e.mesh.position.y - dy, ez = e.mesh.position.z - dz;
@@ -233,8 +264,17 @@ export class Game {
           this.shotsHit++;
           this.audio.hit();
           this.enemies.damage(e, dmg, dx, dy, dz);
+          consumed = true;
           break;
         }
+      }
+      if (consumed || !bossOn) continue;
+      const seg = this.boss.hitTest(dx, dy, dz);
+      if (seg) {
+        w.kill(i);
+        this.shotsHit++;
+        this.audio.hit();
+        this.boss.damage(seg, dmg, dx, dy, dz);
       }
     }
   }
@@ -295,9 +335,14 @@ export class Game {
       }
 
       this.weapons.update(sdt, (px, py, pz, vx, vy, vz) => this.enemies.nearest(px, py, pz, vx, vy, vz));
-      this._daggerEnemy();
 
-      const hit = this.enemies.update(sdt, this.player, this.shaderTime);
+      let hit = this.enemies.update(sdt, this.player, this.shaderTime);
+      this.boss.update(sdt, this.player, this.shaderTime);
+      this._daggerEnemy();
+      if (this.boss.alive) {
+        this.hud.setBoss(this.boss.hp / this.boss.maxHp);
+        if (this.boss.contactsPlayer(this.player)) hit = true;
+      }
       this.director.update(sdt, this.player);
       this.gems.update(sdt, this.player, this.shaderTime);
 
@@ -320,6 +365,7 @@ export class Game {
       // dying: slow-mo, keep enemies/gems drifting, death cam
       this.weapons.update(sdt, () => null);
       this.enemies.update(sdt, this.player, this.shaderTime);
+      this.boss.update(sdt, this.player, this.shaderTime);
       this.gems.update(sdt, this.player, this.shaderTime);
       this._deathCamera(dt);
       this.dyingTimer -= dt;
