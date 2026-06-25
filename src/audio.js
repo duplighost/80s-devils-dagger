@@ -231,6 +231,8 @@ export class AudioEngine {
     });
   }
   wave()     { this._blip('sawtooth', 180, 520, 0.5, 0.18, this.sfxBus, 5); }
+  volley()   { this._blip('square', 320, 180, 0.12, 0.09, this.sfxBus, 6); }
+  slam()     { this._blip('sine', 120, 32, 0.4, 0.32, this.sfxBus, 2); this._noise(0.35, 0.16, 120); }
   uiClick()  { this._blip('square', 880, 880, 0.05, 0.12); }
   playerDeath() {
     this._blip('sawtooth', 600, 40, 1.2, 0.3, this.sfxBus, 3);

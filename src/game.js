@@ -3,8 +3,11 @@ import { Stage } from './renderer.js';
 import { World, ARENA_RADIUS } from './world.js';
 import { Player } from './player.js';
 import { Weapons, LEVELS } from './weapons.js';
-import { Enemies } from './enemies.js';
+import { Enemies, TYPE } from './enemies.js';
 import { Leviathan } from './boss.js';
+import { BossEye } from './bossEye.js';
+import { BossTitan } from './bossTitan.js';
+import { Hazards } from './hazards.js';
 import { Director } from './director.js';
 import { Gems } from './gems.js';
 import { Particles } from './particles.js';
@@ -31,13 +34,24 @@ export class Game {
     this.player = new Player(this.input);
     this.weapons = new Weapons(this.stage.scene);
     this.enemies = new Enemies(this.stage.scene, this.particles);
-    this.boss = new Leviathan(this.stage.scene, this.particles);
+    this.hazards = new Hazards(this.stage.scene, this.particles);
     this.gems = new Gems(this.stage.scene, this.particles);
     this.director = new Director(this.enemies);
 
+    // boss roster — cycled through over a run
+    const lev = new Leviathan(this.stage.scene, this.particles);
+    const eye = new BossEye(this.stage.scene, this.particles, this.hazards);
+    const titan = new BossTitan(this.stage.scene, this.particles, this.hazards);
+    this.bossRoster = [lev, eye, titan];
+    this.bossIdx = 0;
+    this.boss = null; // the active boss, or null
+    for (const b of this.bossRoster) b.onDeath = (pos) => this._onBossDeath(pos);
+    eye.onMinion = (n) => this._spawnMinions(n);
+    eye.onVolley = () => this.audio.volley();
+    titan.onSlam = () => { this.audio.slam(); this.addTrauma(0.4); };
+
     this.enemies.onKill = (e) => this._onKill(e);
     this.gems.onCollect = (n) => this._onGems(n);
-    this.boss.onDeath = (pos) => this._onBossDeath(pos);
     this.director.onWave = (n) => { this.hud.toast(`WAVE ${n}`); this.audio.wave(); this.addTrauma(0.22); };
     this.director.onBoss = () => this._spawnBoss();
 
@@ -107,7 +121,9 @@ export class Game {
     this.player.reset();
     this.weapons.reset();
     this.enemies.reset();
-    this.boss.reset();
+    for (const b of this.bossRoster) b.reset();
+    this.boss = null;
+    this.hazards.reset();
     this.gems.reset();
     this.particles.reset();
     this.director.reset();
@@ -199,19 +215,32 @@ export class Game {
   }
 
   _spawnBoss() {
-    if (this.boss.alive || this.state !== STATE.PLAYING) return;
-    this.boss.spawn(this.player, this.enemies.intensity);
+    if ((this.boss && this.boss.alive) || this.state !== STATE.PLAYING) return;
+    const boss = this.bossRoster[this.bossIdx % this.bossRoster.length];
+    this.bossIdx++;
+    this.boss = boss;
+    boss.spawn(this.player, this.enemies.intensity);
     this.director.bossActive = true;
-    this.hud.showBoss();
-    this.hud.toast('▲ LEVIATHAN ▲');
+    this.hud.showBoss(boss.name);
+    this.hud.toast(boss.name);
     this.audio.wave();
     this.addTrauma(0.6);
   }
 
+  _spawnMinions(n) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, r = 9 + Math.random() * 5;
+      this.enemies.spawn(TYPE.SWARM, Math.cos(a) * r, Math.sin(a) * r);
+    }
+  }
+
   _onBossDeath(pos) {
+    const slain = this.boss ? this.boss.name.replace(/[▲ ]/g, '') : 'BOSS';
     this.director.bossActive = false;
+    this.boss = null;
+    this.hazards.reset();
     this.hud.hideBoss();
-    this.hud.toast('LEVIATHAN SLAIN');
+    this.hud.toast(`${slain} SLAIN`);
     this.kills += 10;
     this.hud.setKills(this.kills);
     this.gems.burst(pos.x, pos.y, pos.z, 28);
@@ -250,7 +279,7 @@ export class Game {
   _daggerEnemy() {
     const w = this.weapons, act = this.enemies.active;
     const dmg = LEVELS[this.level].dmg;
-    const bossOn = this.boss.alive;
+    const bossOn = this.boss && this.boss.alive;
     for (let i = 0; i < w.alive.length; i++) {
       if (!w.alive[i]) continue;
       const dx = w.px[i], dy = w.py[i], dz = w.pz[i];
@@ -337,12 +366,13 @@ export class Game {
       this.weapons.update(sdt, (px, py, pz, vx, vy, vz) => this.enemies.nearest(px, py, pz, vx, vy, vz));
 
       let hit = this.enemies.update(sdt, this.player, this.shaderTime);
-      this.boss.update(sdt, this.player, this.shaderTime);
+      if (this.boss) this.boss.update(sdt, this.player, this.shaderTime);
       this._daggerEnemy();
-      if (this.boss.alive) {
+      if (this.boss && this.boss.alive) {
         this.hud.setBoss(this.boss.hp / this.boss.maxHp);
         if (this.boss.contactsPlayer(this.player)) hit = true;
       }
+      if (this.hazards.update(sdt, this.player)) hit = true;
       this.director.update(sdt, this.player);
       this.gems.update(sdt, this.player, this.shaderTime);
 
@@ -360,12 +390,13 @@ export class Game {
       // camera
       this.player.applyToCamera(this.stage.camera, this._shakeOffset, this._shakeRoll);
 
-      if (hit) this.die();
+      if (hit && this.player.invuln <= 0) this.die();
     } else {
       // dying: slow-mo, keep enemies/gems drifting, death cam
       this.weapons.update(sdt, () => null);
       this.enemies.update(sdt, this.player, this.shaderTime);
-      this.boss.update(sdt, this.player, this.shaderTime);
+      if (this.boss) this.boss.update(sdt, this.player, this.shaderTime);
+      this.hazards.update(sdt, this.player);
       this.gems.update(sdt, this.player, this.shaderTime);
       this._deathCamera(dt);
       this.dyingTimer -= dt;

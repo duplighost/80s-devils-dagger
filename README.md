@@ -38,7 +38,7 @@ Click **INSERT COIN** to lock the mouse and begin.
 | `Mouse` | aim |
 | `Left Mouse` (tap) | shotgun blast of daggers |
 | `Left Mouse` (hold) | rapid dagger stream |
-| `Shift` | dash |
+| `Shift` | dash (brief i-frames — dodge through bullets & charges) |
 | `Space` | hop |
 | `Esc` | pause (release mouse) |
 | `R` / `Space` | retry on the death screen |
@@ -53,9 +53,17 @@ Click **INSERT COIN** to lock the mouse and begin.
   never stand still.
 - **Watch the edges.** Chargers wind up and lunge. Spawners birth swarmers and
   burst into four more when they die.
-- **The Leviathan.** Around the one-minute mark a giant neon serpent crashes the
-  party — it orbits and lunges, the head is lethal, and you chip its shared HP
-  (bar up top) by raking fire down the whole body. Kill it for a gem shower.
+- **Bosses.** Around the one-minute mark the arena throws a boss at you, then
+  cycles through three of them:
+  - **The Leviathan** — a giant neon serpent that orbits and lunges; rake fire
+    down its whole body, the head is lethal.
+  - **The Overseer** — a hovering eye ringed by shield shards. Shoot the shards
+    off to expose the core, then burn it before the shield regenerates — all
+    while dodging its radial and fanned **bullet** patterns and its summoned adds.
+  - **The Colossus** — a hulking brute that winds up, charges in a line, and
+    **slams** out expanding shockwave rings. **Jump** the rings, sidestep the
+    charge, pour fire into its core.
+  - Dash has i-frames — time it to phase through a volley or a charge.
 - **Survival time is the score.** It's tracked to 1/10000th of a second, just like
   the game that inspired it. Your best is saved locally.
 
@@ -72,8 +80,9 @@ A small, dependency-light engine split into focused modules:
 | `player.js` | First-person controller — acceleration/friction strafe, dash, hop, head-bob, strafe-roll, the eye transform the camera rides. |
 | `weapons.js` | Instanced **dagger** projectiles, shotgun-tap / rapid-hold firing, five upgrade tiers with homing. |
 | `enemies.js` | Four neon archetypes (skull, swarmer, charger, spawner) with distinct AI, fresnel-rim bodies + glowing wireframe edges, hit-flash, splitting. |
-| `boss.js` | **Leviathan** — a 20-segment serpent; arc-length snake-follow body, serpentine orbit/lunge AI, gradient segments, shared HP with per-segment hit-flash, lethal head, spectacle death. |
-| `director.js` | Procedural escalation — introduces enemy types over time, grows the live population, punctuates with wave bursts, and looses a Leviathan periodically. |
+| `boss.js` / `bossEye.js` / `bossTitan.js` | The three bosses — **Leviathan** (arc-length snake-follow serpent), **Overseer** (shielded bullet-hell eye that summons adds), **Colossus** (charging brute with slam shockwaves). Shared interface, cycled by the director. |
+| `hazards.js` | Shared enemy-hazard system: pooled instanced neon **bullets** (always lethal) + expanding ground **shockwave rings** (lethal only while grounded — jump them). |
+| `director.js` | Procedural escalation — introduces enemy types over time, grows the live population, punctuates with wave bursts, and cycles bosses periodically. |
 | `gems.js` | Instanced gem drops with magnet collection feeding the upgrade meter. |
 | `particles.js` | Pooled additive point-sprite bursts (muzzle, sparks, deaths, the player-death supernova). |
 | `audio.js` | Fully **procedural synthwave**: four-on-the-floor drums, saw bass, delayed lead arp and pad that layer in with intensity, plus a SFX bank. Drives the visual beat. |

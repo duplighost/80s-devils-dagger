@@ -27,6 +27,7 @@ export class Player {
     this.bobAmt = 0;
     this.dashTimer = 0;
     this.dashCd = 0;
+    this.invuln = 0;     // i-frames (dash dodge)
     this.alive = true;
     this.stepAccrue = 0;
     this._fwd = new THREE.Vector3();
@@ -41,6 +42,7 @@ export class Player {
     this.grounded = true;
     this.dashTimer = 0;
     this.dashCd = 0;
+    this.invuln = 0;
     this.alive = true;
     this.bobPhase = 0;
     this.bobAmt = 0;
@@ -74,14 +76,16 @@ export class Player {
     const wl = Math.hypot(wx, wz);
     if (wl > 0) { wx /= wl; wz /= wl; }
 
-    // --- dash ---
+    // --- dash (brief i-frames so you can dodge through bullets/charges) ---
     this.dashCd = Math.max(0, this.dashCd - dt);
+    this.invuln = Math.max(0, this.invuln - dt);
     if (this.dashTimer > 0) this.dashTimer -= dt;
-    if (inp.down('ShiftLeft') && this.dashCd <= 0 && wl > 0 && this.dashTimer <= 0) {
+    if ((inp.down('ShiftLeft') || inp.down('ShiftRight')) && this.dashCd <= 0 && wl > 0 && this.dashTimer <= 0) {
       this.vel.x = wx * DASH_SPEED;
       this.vel.z = wz * DASH_SPEED;
       this.dashTimer = DASH_TIME;
       this.dashCd = DASH_CD;
+      this.invuln = 0.28;
       events && (events.dashed = true);
     }
 
